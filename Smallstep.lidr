@@ -118,6 +118,8 @@ Reserved Notation " t '\\' n " (at level 50, left associativity).
 
 Module SimpleArith1.
 
+> namespace SimpleArith1
+
 (** Now, here is the corresponding _small-step_ evaluation relation. *)
 (**
                      -------------------------------        (ST_PlusConstConst)
@@ -134,15 +136,15 @@ Module SimpleArith1.
 
 Reserved Notation " t '==>' t' " (at level 40).
 
-> mutual
->   infixl 6 >=>
->   (>=>) : Tm -> Tm -> Type
->   (>=>) = Step
+>   mutual
+>     infixl 6 >=>
+>     (>=>) : Tm -> Tm -> Type
+>     (>=>) = Step
 >
->   data Step : Tm -> Tm -> Type where
->     ST_PlusConstConst : P (C n1) (C n2) >=> C (n1 + n2)
->     ST_Plus1 : t1 >=> t1' -> P t1 t2 >=> P t1' t2
->     ST_Plus2 : t2 >=> t2' -> P (C n1) t2 >=> P (C n1) t2'
+>     data Step : Tm -> Tm -> Type where
+>       ST_PlusConstConst : P (C n1) (C n2) >=> C (n1 + n2)
+>       ST_Plus1 : t1 >=> t1' -> P t1 t2 >=> P t1' t2
+>       ST_Plus2 : t2 >=> t2' -> P (C n1) t2 >=> P (C n1) t2'
 >
 
 (** Things to notice:
@@ -163,7 +165,7 @@ Reserved Notation " t '==>' t' " (at level 40).
 (** If [t1] can take a step to [t1'], then [P t1 t2] steps
     to [P t1' t2]: *)
 
-> test_step_1 :
+>   test_step_1 :
 >      P
 >        (P (C 0) (C 3))
 >        (P (C 2) (C 4))
@@ -171,7 +173,7 @@ Reserved Notation " t '==>' t' " (at level 40).
 >      P
 >        (C (0 + 3))
 >        (P (C 2) (C 4))
-> test_step_1  = ST_Plus1 ST_PlusConstConst
+>   test_step_1  = ST_Plus1 ST_PlusConstConst
 
 (** **** Exercise: 1 star (test_step_2)  *)
 (** Right-hand sides of sums can take a step only when the
@@ -179,7 +181,7 @@ Reserved Notation " t '==>' t' " (at level 40).
     then [P (C n) t2] steps to [P (C n)
     t2']: *)
 
-> test_step_2 :
+>   test_step_2 :
 >      P
 >        (C 0)
 >        (P
@@ -191,7 +193,7 @@ Reserved Notation " t '==>' t' " (at level 40).
 >        (P
 >          (C 2)
 >          (C (0 + 3)))
-> test_step_2 = ST_Plus2 (ST_Plus2 ST_PlusConstConst)
+>   test_step_2 = ST_Plus2 (ST_Plus2 ST_PlusConstConst)
 
 End SimpleArith1.
 
@@ -260,63 +262,25 @@ Definition deterministic {X: Type} (R: relation X) :=
 Module SimpleArith2.
 Import SimpleArith1.
 
-t1 >=> t1' -> P t1 t2 >=> P t1' t2
+> namespace SimpleArith2
 
-> -- lemma0 : C (plus n1 n2) => P (C n1) (C n2)
-> -- lemma0 hyp = ?hole0
+>   step_deterministic : deterministic Step
+>   step_deterministic ST_PlusConstConst hyp =
+>     case hyp of
+>       ST_PlusConstConst => Refl
+>       ST_Plus1 _ impossible
+>       ST_Plus2 _ impossible
+>   step_deterministic (ST_Plus1 l) hyp =
+>     case hyp of
+>       ST_PlusConstConst impossible
+>       ST_Plus1 l' => rewrite step_deterministic l l' in Refl
+>       ST_Plus2 _ impossible
+>   step_deterministic (ST_Plus2 r) hyp =
+>     case hyp of
+>       ST_PlusConstConst impossible
+>       ST_Plus1 _ impossible
+>       ST_Plus2 r' => rewrite step_deterministic r r' in Refl
 
-
-> impossibleStep1 : (b,c : Tm) -> (a: Tm) -> Not (a >=> b, a >=> c)
-> -- impossibleStep1 (C (plus n1 n2)) (P l (C n2)) c (ST_PlusConstConst, r) = ?hole
-
-> --lemma : Not (C (plus n1 n2) = P t1' (C n2))
-
-> step_deterministic : deterministic Step
-> step_deterministic hy1 =
->   case hy1 of
->     ST_PlusConstConst => \hy2 =>
->       case hy2 of
->         ST_PlusConstConst => Refl
->         ST_Plus1 l =>
->           case l of
->             ST_PlusConstConst impossible
->             ST_Plus1 l impossible
->             ST_Plus2 r impossible
->         ST_Plus2 r =>
->           case r of
->             ST_PlusConstConst impossible
->             ST_Plus1 l impossible
->             ST_Plus2 r impossible
->     ST_Plus1 l => \hy2 =>
->       case hy2 of
->         ST_PlusConstConst impossible
->         ST_Plus1 l' => ?hole
->           let indHyp = step_deterministic l' x
->           in rewrite indHyp in Refl
->         ST_Plus2 r' impossible
->     ST_Plus2 r => \hy2 => ?hole2
-
-> {- step_deterministic : deterministic Step
-> step_deterministic ST_PlusConstConst r =
->   case r of
->     ST_PlusConstConst => Refl
->     ST_Plus1 x => ?hole1
->     ST_Plus2 x => ?hole2
-> step_deterministic (ST_Plus1 l) r =
->   case r of
->     ST_PlusConstConst => ?hole3
->     ST_Plus1 x =>
->       let indHyp = step_deterministic l x
->       in rewrite indHyp in Refl
->     ST_Plus2 x => ?hole4
-> step_deterministic (ST_Plus2 l) r =
->   case r of
->     ST_PlusConstConst => ?hole5
->     ST_Plus1 x => ?hole6
->     ST_Plus2 x =>
->       let indHyp = step_deterministic l x
->       in rewrite indHyp in Refl
-> -}
 
 Theorem step_deterministic:
   deterministic step.
@@ -439,6 +403,10 @@ End SimpleArith3.
 Inductive value : tm -> Prop :=
   | v_const : forall n, value (C n).
 
+> data Value : Tm -> Type where
+>   V_const : (n : Nat) -> Value (C n)
+>
+
 (** Having introduced the idea of values, we can use it in the
     definition of the [==>] relation to write [ST_Plus2] rule in a
     slightly more elegant way: *)
@@ -481,6 +449,17 @@ Inductive step : tm -> tm -> Prop :=
         P v1 t2 ==> P v1 t2'
 
   where " t '==>' t' " := (step t t').
+
+> mutual
+>   infixl 6 >>>
+>   (>>>) : Tm -> Tm -> Type
+>   (>>>) = Smallstep.Step
+>
+>   data Step : Tm -> Tm -> Type where
+>     ST_PlusConstConst : P (C n1) (C n2) >>> C (n1 + n2)
+>     ST_Plus1 : t1 >>> t1' -> P t1 t2 >>> P t1' t2
+>     ST_Plus2 : Value v1 -> t2 >>> t2' -> P v1 t2 >>> P v1 t2'
+
 
 (** **** Exercise: 3 stars, recommended (redo_determinism)  *)
 (** As a sanity check on this change, let's re-verify determinism.
@@ -564,6 +543,24 @@ Proof.
           exists (P t' t2).
           apply ST_Plus1. apply H0.  Qed.
 
+>  strong_progress : (t: Tm) -> Either (Value t) (t': Tm ** t >=> t')
+>  strong_progress (C n) = Left (V_const n)
+>  strong_progress (P l r) = Right (
+>     case l of
+>       (C n) => case r of
+>         (C n')  => (C (n + n') ** ST_PlusConstConst)
+>         (P l' r') =>
+>           let indHyp = strong_progress (P (C n) r')
+>           in case indHyp of
+>             Right ir => ?hole -- (P (C n) (P l r) ** ?hole) -- ST_Plus2 (P l r ** ir))
+>             Left il => ?hole02
+>       (P l' r') => case r of
+>         (C n)  => ?hole11
+>         (P l'' r'') => ?hole12
+>   )
+
+
+
 (** This important property is called _strong progress_, because
     every term either is a value or can "make progress" by stepping to
     some other term.  (The qualifier "strong" distinguishes it from a
@@ -580,6 +577,8 @@ Proof.
 
 Definition normal_form {X:Type} (R:relation X) (t:X) : Prop :=
   ~ exists t', R t t'.
+
+
 
 (** Note that this definition specifies what it is to be a normal form
     for an _arbitrary_ relation [R] over an arbitrary set [X], not

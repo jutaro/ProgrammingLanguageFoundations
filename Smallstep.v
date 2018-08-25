@@ -6,8 +6,9 @@ Require Import Coq.Arith.EqNat.
 Require Import Coq.omega.Omega.
 Require Import Coq.Lists.List.
 Import ListNotations.
-Require Import Maps.
-Require Import Imp. 
+Locate Library Maps.
+(** Require Import Maps.
+Require Import Imp. **)
 
 (** The evaluators we have seen so far (for [aexp]s, [bexp]s,
     commands, ...) have been formulated in a "big-step" style: they
